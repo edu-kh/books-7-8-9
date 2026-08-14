@@ -219,11 +219,15 @@
             cursor: pointer;
             line-height: 1;
             border-radius: 15px;
+           
             color: #f3f3f3;
+            
+          
         }
         .close-btn:hover{
             color: #f36454ea;
-            background-color: #f3f3f3;  
+            background-color: #f3f3f3;
+            
         }
 
         .panel-content {
@@ -443,6 +447,47 @@
             cursor: not-allowed;
         }
 
+        /* --- FOOTER STYLES --- */
+        .site-footer {
+            width: 100%;
+            margin-top: auto;
+            padding: 14px 10px 16px;
+            text-align: center;
+            background: #2c3e50;
+            color: #dfe6ea;
+            font-family: 'Battambang', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.3px;
+            transform: translateY(0);
+            opacity: 1;
+            transition: transform 0.4s ease, opacity 0.4s ease, visibility 0.4s ease;
+            animation: footerRise 0.6s ease-out;
+        }
+
+        .site-footer.hidden {
+            transform: translateY(100%);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .site-footer .heart {
+            display: inline-block;
+            color: #e74c3c;
+            animation: heartbeat 1.4s ease-in-out infinite;
+        }
+
+        @keyframes footerRise {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.25); }
+        }
+        /* ------------------------- */
+
         /* --- CUSTOM POPUP STYLES --- */
         .popup-overlay {
             display: none;
@@ -564,6 +609,7 @@
             0% { transform: translateX(-100%); }
             100% { transform: translateX(250%); }
         }
+       
     </style>
 </head>
 <body>
@@ -603,7 +649,7 @@
     </div>
 
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="ស្វែងរកថ្នាក់ 7A, 7B,...">
+        <input type="text" id="searchInput" placeholder="ស្វែងរកថ្នាក់ 7A ដល់ 9H">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
     </div>
 
@@ -627,6 +673,12 @@
         </div>
     </div>
 
+    <!-- SITE FOOTER -->
+    <footer id="siteFooter" class="site-footer">
+        <span>© 2026 — បង្កើតដោយ </span> <span style="color: #8dcbfa;">ពីន គុយ</span>
+        <span class="heart"> <i class="fa-solid fa-heart"></i></span>
+    </footer>
+   
     <script>
         // Custom Pop-up Functions
         function showPopup(message, refreshOnOk = false) {
@@ -682,6 +734,7 @@
         const searchInput = document.getElementById('searchInput');
         const resultsContainer = document.getElementById('resultsContainer');
         const panelOverlay = document.getElementById('studentPanelOverlay');
+        const siteFooter = document.getElementById('siteFooter');
         const closePanelBtn = document.getElementById('closePanelBtn');
         const panelClassTitle = document.getElementById('panelClassTitle');
         const studentListContainer = document.getElementById('studentListContainer');
@@ -803,6 +856,7 @@ async function triggerDownload(action, type, sheetName) {
             panelClassTitle.textContent = `បញ្ជីសៀវភៅថ្នាក់ទី ${className} ឆ្នាំ 2026~27`;
             renderStudentList();
             panelOverlay.style.display = 'flex';
+            siteFooter.classList.add('hidden');
         }
 
         function renderStudentList() {
@@ -1076,9 +1130,15 @@ async function triggerDownload(action, type, sheetName) {
             }
         });
 
-        closePanelBtn.addEventListener('click', () => panelOverlay.style.display = 'none');
+        closePanelBtn.addEventListener('click', () => {
+            panelOverlay.style.display = 'none';
+            siteFooter.classList.remove('hidden');
+        });
         panelOverlay.addEventListener('click', (e) => {
-            if (e.target === panelOverlay) panelOverlay.style.display = 'none';
+            if (e.target === panelOverlay) {
+                panelOverlay.style.display = 'none';
+                siteFooter.classList.remove('hidden');
+            }
         });
 
         loadDataFromAppsScript();
