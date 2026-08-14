@@ -448,9 +448,16 @@
         }
 
         /* --- FOOTER STYLES --- */
+        body {
+            padding-bottom: 48px; /* reserve space so fixed footer never covers content */
+        }
+
         .site-footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
             width: 100%;
-            margin-top: auto;
+            z-index: 500;
             padding: 14px 10px 16px;
             text-align: center;
             background: #2c3e50;
@@ -675,8 +682,8 @@
 
     <!-- SITE FOOTER -->
     <footer id="siteFooter" class="site-footer">
-        <span>© 2026 — បង្កើតដោយ </span> <span style="color: #8dcbfa;">ពីន គុយ</span>
-        <span class="heart"> <i class="fa-solid fa-heart"></i></span>
+        <span>© 2026 — បង្កើតដោយ</span> <span style="color: #7acdfd;">ពីន គុយ</span>
+        <span class="heart"><i class="fa-solid fa-heart"></i></span>
     </footer>
    
     <script>
