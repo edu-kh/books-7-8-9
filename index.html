@@ -362,6 +362,14 @@
             box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
         }
 
+        .attendance-select:disabled {
+            background-color: #ecf0f1;
+            color: #b2bec3;
+            cursor: not-allowed;
+            border-color: #dcdde1;
+            opacity: 0.7;
+        }
+
         .attendance-select.no-select {
             background-color: #f8f9fa;
             color: #7f8c8d;
@@ -402,6 +410,10 @@
             gap: 10px;
         }
 
+        .panel-footer .save-btn {
+            margin-right: auto;
+        }
+
         .btn {
             border: none;
             padding: 8px 10px;
@@ -421,6 +433,14 @@
             background: #c0392b;
         }
 
+        .preview-btn {
+            background: #8e44ad;
+        }
+
+        .preview-btn:hover {
+            background: #6c3483;
+        }
+
         .excel-btn {
             background: #1e8449;
         }
@@ -432,7 +452,6 @@
         .save-btn {
             background: #3498db;
             font-size: 1rem;
-            margin-left: 20px;
         }
         
      
@@ -492,6 +511,84 @@
         @keyframes heartbeat {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.25); }
+        }
+        /* ------------------------- */
+
+        /* --- PDF PREVIEW MODAL STYLES --- */
+        .pdf-preview-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 10002;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pdf-preview-box {
+            background: white;
+            width: 95%;
+            max-width: 900px;
+            height: 92vh;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .pdf-preview-header {
+            background: #8e44ad;
+            color: white;
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Battambang', sans-serif;
+        }
+
+        .pdf-preview-header h3 {
+            margin: 0;
+            font-size: 1.05rem;
+        }
+
+        .pdf-preview-close {
+            font-size: 1.8rem;
+            cursor: pointer;
+            line-height: 1;
+            color: #f3f3f3;
+        }
+
+        .pdf-preview-close:hover {
+            color: #f36454ea;
+        }
+
+        .pdf-preview-body {
+            flex-grow: 1;
+            background: #525659;
+            position: relative;
+        }
+
+        .pdf-preview-body iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .pdf-preview-loading {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #eee;
+            font-family: 'Battambang', sans-serif;
+            font-size: 1rem;
+            gap: 12px;
         }
         /* ------------------------- */
 
@@ -648,15 +745,32 @@
         </div>
     </div>
 
+    <!-- PDF PREVIEW MODAL -->
+    <div id="pdfPreviewOverlay" class="pdf-preview-overlay">
+        <div class="pdf-preview-box">
+            <div class="pdf-preview-header">
+                <h3 id="pdfPreviewTitle">មើលឯកសារ PDF</h3>
+                <span class="pdf-preview-close" id="pdfPreviewCloseBtn" title="Close"><i class="fa-solid fa-circle-xmark"></i></span>
+            </div>
+            <div class="pdf-preview-body">
+                <div id="pdfPreviewLoading" class="pdf-preview-loading">
+                    <div class="spinner"></div>
+                    <span>កំពុងផ្ទុក PDF...</span>
+                </div>
+                <iframe id="pdfPreviewFrame" title="PDF Preview"></iframe>
+            </div>
+        </div>
+    </div>
+
 
 
     <div class="hero">
         <h3>វិទ្យាល័យ ហ៊ុនសែន មិត្តភាព</h3>
-        <p>បញ្ជីខ្ចីសងសៀវភៅ(ថ្នាក់ទី៧, ៨ និង៩) ២០២៦~២០២៧</p>
+        <p>បញ្ជីខ្ចីសងសៀវភៅ(ថ្នាក់ទី៧ ៨ និង៩) ២០២៦~២០២៧</p>
     </div>
 
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="ស្វែងរកថ្នាក់ 7A ដល់ 9H">
+        <input type="text" id="searchInput" placeholder="ស្វែងរកថ្នាក់ទី 7A ដល់ 9H">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
     </div>
 
@@ -673,9 +787,10 @@
             <div class="panel-content" id="studentListContainer"></div>
 
             <div class="panel-footer">
+                <button class="btn save-btn" id="saveBtn" >Save <i class="fa-solid fa-book"></i></button>
+                <button class="btn preview-btn" id="previewBtn" title="Preview PDF">View <i class="fa-solid fa-eye"></i></button>
                 <button class="btn pdf-btn" id="pdfBtn" title="Download">PDF <i class="fa-solid fa-file-pdf"></i></button>
                 <button class="btn excel-btn" id="excelBtn" title="Download">Excel <i class="fa-solid fa-file-excel"></i></button>
-                <button class="btn save-btn" id="saveBtn" >Save <i class="fa-solid fa-book"></i></button>
             </div>
         </div>
     </div>
@@ -748,6 +863,7 @@
         const saveBtn = document.getElementById('saveBtn');
         const pdfBtn = document.getElementById('pdfBtn');
         const excelBtn = document.getElementById('excelBtn');
+        const previewBtn = document.getElementById('previewBtn');
 
         // Download overlay elements
         const downloadOverlay = document.getElementById('downloadOverlay');
@@ -756,15 +872,53 @@
         const downloadMessage = document.getElementById('downloadMessage');
         const downloadProgressBar = document.getElementById('downloadProgressBar');
 
-        function showDownloadOverlay(type) {
+        // PDF preview modal elements
+        const pdfPreviewOverlay = document.getElementById('pdfPreviewOverlay');
+        const pdfPreviewFrame = document.getElementById('pdfPreviewFrame');
+        const pdfPreviewLoading = document.getElementById('pdfPreviewLoading');
+        const pdfPreviewTitle = document.getElementById('pdfPreviewTitle');
+        const pdfPreviewCloseBtn = document.getElementById('pdfPreviewCloseBtn');
+        let currentPreviewBlobUrl = null;
+
+        function openPdfPreview(blobUrl, title) {
+            currentPreviewBlobUrl = blobUrl;
+            pdfPreviewTitle.textContent = title || 'មើលឯកសារ PDF';
+            pdfPreviewLoading.style.display = 'flex';
+            pdfPreviewFrame.style.visibility = 'hidden';
+            pdfPreviewFrame.src = blobUrl;
+            pdfPreviewOverlay.style.display = 'flex';
+        }
+
+        function closePdfPreview() {
+            pdfPreviewOverlay.style.display = 'none';
+            pdfPreviewFrame.src = '';
+            if (currentPreviewBlobUrl) {
+                URL.revokeObjectURL(currentPreviewBlobUrl);
+                currentPreviewBlobUrl = null;
+            }
+        }
+
+        pdfPreviewFrame.addEventListener('load', () => {
+            if (pdfPreviewFrame.src) {
+                pdfPreviewLoading.style.display = 'none';
+                pdfPreviewFrame.style.visibility = 'visible';
+            }
+        });
+
+        pdfPreviewCloseBtn.addEventListener('click', closePdfPreview);
+        pdfPreviewOverlay.addEventListener('click', (e) => {
+            if (e.target === pdfPreviewOverlay) closePdfPreview();
+        });
+
+        function showDownloadOverlay(type, mode = 'download') {
             downloadIconWrap.classList.remove('pdf', 'excel');
             downloadProgressBar.classList.remove('pdf-color', 'excel-color');
 
             if (type === 'pdf') {
                 downloadIconWrap.classList.add('pdf');
                 downloadProgressBar.classList.add('pdf-color');
-                downloadIcon.className = 'fa-solid fa-file-pdf';
-                downloadMessage.textContent = 'កំពុងទាញយក PDF...';
+                downloadIcon.className = mode === 'preview' ? 'fa-solid fa-eye' : 'fa-solid fa-file-pdf';
+                downloadMessage.textContent = mode === 'preview' ? 'កំពុងបើក PDF...' : 'កំពុងទាញយក PDF...';
             } else {
                 downloadIconWrap.classList.add('excel');
                 downloadProgressBar.classList.add('excel-color');
@@ -786,8 +940,8 @@ function isInAppBrowser() {
             ua.includes("Instagram"));
 }
 
-async function triggerDownload(action, type, sheetName) {
-    showDownloadOverlay(type);
+async function triggerDownload(action, type, sheetName, mode = 'download') {
+    showDownloadOverlay(type, mode);
 
     try {
         const scriptUrl = `${WEB_APP_URL}?action=${action}&sheetName=${encodeURIComponent(sheetName)}`;
@@ -806,20 +960,26 @@ async function triggerDownload(action, type, sheetName) {
         }
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: data.mimeType });
-
-        // Create local memory URL and trigger direct download
         const blobUrl = URL.createObjectURL(blob);
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.href = blobUrl;
-        // Build file name as "Sheet Title - Sheet Tab.ext"
-        const extension = type === 'pdf' ? 'pdf' : 'xlsx';
-        const sheetTitle = document.title || 'Sheet';
-        downloadAnchor.download = `${sheetTitle} - ${sheetName}.${extension}`;
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        document.body.removeChild(downloadAnchor);
 
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+        if (mode === 'preview') {
+            // Open the PDF inside an in-page modal instead of a new tab
+            const previewTitle = `${document.title || 'Sheet'} - ${sheetName}`;
+            openPdfPreview(blobUrl, previewTitle);
+        } else {
+            // Create local memory URL and trigger direct download
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.href = blobUrl;
+            // Build file name as "Sheet Title - Sheet Tab.ext"
+            const extension = type === 'pdf' ? 'pdf' : 'xlsx';
+            const sheetTitle = document.title || 'Sheet';
+            downloadAnchor.download = `${sheetTitle} - ${sheetName}.${extension}`;
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            document.body.removeChild(downloadAnchor);
+
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+        }
 
     } catch (err) {
         console.error(err);
@@ -929,6 +1089,9 @@ async function triggerDownload(action, type, sheetName) {
                 // Special row: "សរុបចំនួនខូច" only tracks broken/damaged counts for (សង) subjects
                 const isDamagedSummaryRow = studentName === "សរុបចំនួនខូច";
 
+                // Tracks (ខ្ចី)/(សង) select pairs for this student row, keyed by base subject name
+                const pairSelects = {};
+
                 subjects.forEach(subject => {
                     // Hide (ខ្ចី) and ផ្សេងៗ subjects entirely for the damaged-summary row
                     if (isDamagedSummaryRow && (subject.includes('(ខ្ចី)') || subject === "ផ្សេងៗ")) {
@@ -1009,6 +1172,10 @@ async function triggerDownload(action, type, sheetName) {
                         optNoSelect.textContent = 'ជ្រើសរើស';
                         select.appendChild(optNoSelect);
 
+                        // Base subject name shared between the (ខ្ចី) and (សង) pair, e.g. "ខ្មែរ"
+                        const baseSubject = subject.replace('(ខ្ចី)', '').replace('(សង)', '');
+                        if (!pairSelects[baseSubject]) pairSelects[baseSubject] = {};
+
                         // Dynamic options based on subject type
                         if (subject.includes('(សង)')) {
                             const optBat = document.createElement('option');
@@ -1038,10 +1205,42 @@ async function triggerDownload(action, type, sheetName) {
                         select.value = selectStatus;
                         updateSelectColor(select, selectStatus);
 
+                        // Remember this (ខ្ចី) select so its paired (សង) select can check it
+                        if (subject.includes('(ខ្ចី)')) {
+                            pairSelects[baseSubject].khciSelect = select;
+                        }
+
+                        // A (សង) select starts disabled unless its (ខ្ចី) pair is already ថ្មី/ចាស់
+                        if (subject.includes('(សង)')) {
+                            pairSelects[baseSubject].songSelect = select;
+                            const khciSelect = pairSelects[baseSubject].khciSelect;
+                            const khciVal = khciSelect ? khciSelect.value : 'null';
+                            select.disabled = !(khciVal === 'ថ្មី' || khciVal === 'ចាស់');
+                        }
+
                         select.addEventListener('change', (e) => {
                             const val = e.target.value;
                             attendanceData[currentSelectedClass][subject][studentId] = (val === 'null') ? null : val;
                             updateSelectColor(select, val);
+
+                            // When (ខ្ចី) changes, enable/disable its paired (សង) select accordingly
+                            if (subject.includes('(ខ្ចី)')) {
+                                const pair = pairSelects[baseSubject];
+                                const songSelect = pair ? pair.songSelect : null;
+                                if (songSelect) {
+                                    const shouldEnable = (val === 'ថ្មី' || val === 'ចាស់');
+                                    songSelect.disabled = !shouldEnable;
+                                    if (!shouldEnable) {
+                                        // Reset the (សង) status when its (ខ្ចី) pair is cleared
+                                        const songSubject = baseSubject + '(សង)';
+                                        songSelect.value = 'null';
+                                        if (attendanceData[currentSelectedClass][songSubject]) {
+                                            attendanceData[currentSelectedClass][songSubject][studentId] = null;
+                                        }
+                                        updateSelectColor(songSelect, 'null');
+                                    }
+                                }
+                            }
                         });
 
                         subjectBlock.appendChild(subjectLabel);
@@ -1070,6 +1269,11 @@ async function triggerDownload(action, type, sheetName) {
                 selectElement.classList.add('no-select');
             }
         }
+
+        previewBtn.addEventListener('click', () => {
+            if (!currentSelectedClass) return;
+            triggerDownload('exportPdf', 'pdf', currentSelectedClass, 'preview');
+        });
 
         pdfBtn.addEventListener('click', () => {
             if (!currentSelectedClass) return;
