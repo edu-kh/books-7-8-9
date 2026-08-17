@@ -425,7 +425,16 @@
             transition: background 0.2s, opacity 0.2s;
             color: white;
         }
-
+ .btn3 {
+            border: none;
+            padding: 8px 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            color: white;
+        }
         .pdf-btn {
             background: #e74c3c;
         }
@@ -780,11 +789,11 @@
 
     <div class="hero">
         <h3>វិទ្យាល័យ ហ៊ុនសែន មិត្តភាព</h3>
-        <p>បញ្ជីខ្ចីសងសៀវភៅ(ថ្នាក់ទី៧, ៨ និង៩) ២០២៦~២០២៧</p>
+        <p>បញ្ជីខ្ចីសងសៀវភៅ(ថ្នាក់ទី៧ ៨ និង៩) ២០២៦~២០២៧</p>
     </div>
 
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="ស្វែងរកថ្នាក់ 7A ដល់ 9H">
+        <input type="text" id="searchInput" placeholder="ស្វែងរកថ្នាក់ទី 7A ដល់ 9H">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
     </div>
 
@@ -802,9 +811,9 @@
 
             <div class="panel-footer">
                 <button class="btn save-btn" id="saveBtn" >Save <i class="fa-solid fa-book"></i></button>
-                <button class="btn preview-btn" id="previewBtn" title="Preview PDF">Preview <i class="fa-solid fa-eye"></i></button>
-                <button class="btn pdf-btn" id="pdfBtn" title="Download">PDF <i class="fa-solid fa-file-pdf"></i></button>
-                <button class="btn excel-btn" id="excelBtn" title="Download">Excel <i class="fa-solid fa-file-excel"></i></button>
+                <button class="btn3 preview-btn" id="previewBtn" title="Preview PDF">View <i class="fa-solid fa-eye"></i></button>
+                <button class="btn3 pdf-btn" id="pdfBtn" title="Download">PDF <i class="fa-solid fa-file-pdf"></i></button>
+                <button class="btn3 excel-btn" id="excelBtn" title="Download">Excel <i class="fa-solid fa-file-excel"></i></button>
             </div>
         </div>
     </div>
@@ -964,7 +973,7 @@
                 downloadIconWrap.classList.add('pdf');
                 downloadProgressBar.classList.add('pdf-color');
                 downloadIcon.className = mode === 'preview' ? 'fa-solid fa-eye' : 'fa-solid fa-file-pdf';
-                downloadMessage.textContent = mode === 'preview' ? 'កំពុងបើក PDF...' : 'កំពុងទាញយក PDF...';
+                downloadMessage.textContent = mode === 'preview' ? 'កំពុងបើក file' : 'កំពុងទាញយក PDF...';
             } else {
                 downloadIconWrap.classList.add('excel');
                 downloadProgressBar.classList.add('excel-color');
