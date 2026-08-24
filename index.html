@@ -1621,11 +1621,11 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                     `;
                     nameSpan.style.fontSize = '1rem';
                     nameSpan.style.color = 'red';
-                    nameSpan.style.width = '100px';
+                    nameSpan.style.width = 'calc(100% - 36px)';
                     nameSpan.style.overflow = 'visible';
                     nameSpan.style.textOverflow = 'unset';
-                    infoDiv.style.width = '100px';
-                    infoDiv.style.minWidth = 'fit-content';
+                    infoDiv.style.width = 'var(--student-column-width)';
+                    infoDiv.style.minWidth = 'var(--student-column-width)';
                 }
 
                 infoDiv.appendChild(avatar);
