@@ -618,6 +618,69 @@
             border-color: var(--hl-amber-border);
         }
 
+        /* --- CUSTOM DROPDOWN (renders identically on every browser/device,
+           since native <option> lists can't be styled consistently) --- */
+        .custom-select-wrap {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-wrap .attendance-select {
+            width: 100%;
+            margin: 0;
+        }
+
+        .cs-panel {
+            position: fixed;
+            z-index: 3000;
+            background: var(--paper);
+            border: 1.5px solid var(--hl-gray-border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            padding: 6px;
+            max-height: 240px;
+            overflow-y: auto;
+            opacity: 0;
+            transform: scale(0.97);
+            transform-origin: top center;
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+
+        .cs-panel.open {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .cs-panel.flip-up { transform-origin: bottom center; }
+
+        .cs-panel::-webkit-scrollbar { width: 8px; }
+        .cs-panel::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: var(--radius-pill); }
+
+        .cs-option {
+            padding: 9px 14px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            text-align: center;
+            color: var(--ink-soft);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.14s ease, color 0.14s ease;
+        }
+
+        .cs-option:hover,
+        .cs-option.active {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .cs-option.selected {
+            background: var(--primary);
+            color: #fff;
+        }
+
         .panel-footer {
             padding: 15px 20px;
             background: linear-gradient(180deg, #fbfcff, #f5f7ff);
@@ -727,7 +790,7 @@
 
         .site-footer .heart {
             display: inline-block;
-            color: #9c2738;
+            color: #ed2a47;
             animation: heartbeat 1.4s ease-in-out infinite;
         }
 
@@ -1376,6 +1439,9 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
 
         function renderStudentList() {
             studentListContainer.innerHTML = '';
+            // Custom dropdown panels live in document.body (so they're never
+            // clipped by scrolling rows), so they must be cleared explicitly.
+            document.querySelectorAll('.cs-panel').forEach(p => p.remove());
             const students = [...(studentData[currentSelectedClass] || [])].sort((a, b) => {
                 const aIsSummary = a.name === "សរុបចំនួនខូច";
                 const bIsSummary = b.name === "សរុបចំនួនខូច";
@@ -1592,7 +1658,7 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                         });
 
                         subjectBlock.appendChild(subjectLabel);
-                        subjectBlock.appendChild(select);
+                        subjectBlock.appendChild(enhanceSelect(select));
                     }
 
                     subjectsContainer.appendChild(subjectBlock);
@@ -1602,6 +1668,144 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                 studentListContainer.appendChild(studentDiv);
             });
         }
+
+        // --- Custom dropdown engine -------------------------------------
+        // Native <select> option lists render with completely different
+        // fonts/colors/paddings on Chrome, Safari, Firefox and mobile OS
+        // pickers, and CSS can't touch <option> styling to fix that. So
+        // we keep the real <select> (for its value/disabled/change-event
+        // behavior, which the rest of the app already relies on) but hide
+        // it and drive a custom-built, fully-styled dropdown on top of it
+        // that looks identical everywhere.
+        let __csGlobalListenersReady = false;
+        function ensureCustomSelectGlobalListeners() {
+            if (__csGlobalListenersReady) return;
+            __csGlobalListenersReady = true;
+            document.addEventListener('click', (e) => {
+                document.querySelectorAll('.custom-select-wrap.open').forEach(w => {
+                    if (!w.contains(e.target)) w._csClose();
+                });
+            });
+            document.addEventListener('scroll', () => {
+                document.querySelectorAll('.custom-select-wrap.open').forEach(w => w._csClose());
+            }, true);
+            window.addEventListener('resize', () => {
+                document.querySelectorAll('.custom-select-wrap.open').forEach(w => w._csClose());
+            });
+        }
+
+        function enhanceSelect(select) {
+            ensureCustomSelectGlobalListeners();
+
+            const wrap = document.createElement('div');
+            wrap.className = 'custom-select-wrap';
+
+            const trigger = document.createElement('button');
+            trigger.type = 'button';
+            trigger.className = select.className;
+            trigger.setAttribute('aria-haspopup', 'listbox');
+            trigger.setAttribute('aria-expanded', 'false');
+
+            const panel = document.createElement('div');
+            panel.className = 'cs-panel';
+            panel.setAttribute('role', 'listbox');
+            document.body.appendChild(panel);
+
+            function labelFor(value) {
+                const opt = Array.from(select.options).find(o => o.value === value);
+                return opt ? opt.textContent : '';
+            }
+
+            function syncTrigger() {
+                trigger.textContent = labelFor(select.value);
+                trigger.className = select.className; // mirrors status colors (attendant/absent/etc.)
+                trigger.disabled = select.disabled;
+                panel.querySelectorAll('.cs-option').forEach(item => {
+                    item.classList.toggle('selected', item.dataset.value === select.value);
+                });
+            }
+
+            function buildOptions() {
+                panel.innerHTML = '';
+                Array.from(select.options).forEach(opt => {
+                    const item = document.createElement('div');
+                    item.className = 'cs-option';
+                    item.setAttribute('role', 'option');
+                    item.dataset.value = opt.value;
+                    item.textContent = opt.textContent;
+                    if (opt.value === select.value) item.classList.add('selected');
+                    item.addEventListener('click', () => {
+                        if (select.value !== opt.value) {
+                            select.value = opt.value;
+                            select.dispatchEvent(new Event('change'));
+                        }
+                        syncTrigger();
+                        closeDropdown();
+                    });
+                    panel.appendChild(item);
+                });
+            }
+
+            function positionPanel() {
+                const r = trigger.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - r.bottom;
+                const flipUp = spaceBelow < 220 && r.top > spaceBelow;
+                panel.style.left = Math.round(r.left) + 'px';
+                panel.style.width = Math.round(r.width) + 'px';
+                panel.classList.toggle('flip-up', flipUp);
+                if (flipUp) {
+                    panel.style.top = 'auto';
+                    panel.style.bottom = (window.innerHeight - r.top + 6) + 'px';
+                } else {
+                    panel.style.bottom = 'auto';
+                    panel.style.top = (r.bottom + 6) + 'px';
+                }
+            }
+
+            function openDropdown() {
+                if (select.disabled) return;
+                document.querySelectorAll('.custom-select-wrap.open').forEach(w => { if (w !== wrap) w._csClose(); });
+                buildOptions();
+                positionPanel();
+                wrap.classList.add('open');
+                panel.classList.add('open');
+                trigger.setAttribute('aria-expanded', 'true');
+            }
+
+            function closeDropdown() {
+                wrap.classList.remove('open');
+                panel.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+            wrap._csClose = closeDropdown;
+
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (wrap.classList.contains('open')) closeDropdown(); else openDropdown();
+            });
+
+            trigger.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeDropdown();
+                if ((e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') && !wrap.classList.contains('open')) {
+                    e.preventDefault();
+                    openDropdown();
+                }
+            });
+
+            new MutationObserver(syncTrigger).observe(select, { attributes: true, attributeFilter: ['class', 'disabled'] });
+
+            select.style.display = 'none';
+            select.setAttribute('aria-hidden', 'true');
+            select.tabIndex = -1;
+
+            wrap.appendChild(select);
+            wrap.appendChild(trigger);
+
+            syncTrigger();
+
+            return wrap;
+        }
+        // -----------------------------------------------------------------
 
         function updateSelectColor(selectElement, status) {
             selectElement.classList.remove('attendant', 'absent', 'oldbook','returnbook', 'no-select');
