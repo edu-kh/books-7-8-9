@@ -47,6 +47,10 @@
             --shadow-sm: 0 2px 8px rgba(28, 39, 76, 0.07);
             --shadow-md: 0 10px 26px rgba(28, 39, 76, 0.10);
             --shadow-lg: 0 22px 48px rgba(28, 39, 76, 0.18);
+
+            --student-column-width: 150px;
+            --subject-column-width: 105px;
+            --subject-column-gap: 12px;
         }
 
         * {
@@ -443,7 +447,8 @@
             height: 65px;
             display: flex;
             align-items: center;
-            width: 8.8%;
+            width: var(--student-column-width);
+            flex: 0 0 var(--student-column-width);
             flex-shrink: 0;
             position: sticky;
             left: 0;
@@ -455,8 +460,7 @@
             border-radius: 12px;
         }
         .student-info:hover {
-            width: 8.8%;
-            min-width: fit-content;
+            width: var(--student-column-width);
         }
 
         .student-item:hover .student-info {
@@ -482,12 +486,32 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            cursor: pointer;
+        }
+
+        .student-name.is-expanded {
+            position: absolute;
+            left: 42px;
+            top: 50%;
+            z-index: 10;
+            width: max-content;
+            max-width: calc(100vw - 76px);
+            padding: 7px 10px;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            word-break: keep-all;
+            background: var(--paper);
+            border: 1px solid var(--primary-light);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-50%);
         }
 
         /* Subjects Container */
         .subjects-container {
             display: flex;
-            gap: 12px;
+            gap: var(--subject-column-gap);
             padding-left: 10px;
         }
 
@@ -496,7 +520,9 @@
             flex-direction: column;
             align-items: center;
             gap: 6px;
-            min-width: 105px;
+            width: var(--subject-column-width);
+            min-width: var(--subject-column-width);
+            flex: 0 0 var(--subject-column-width);
             background: var(--paper);
             border-radius: 14px;
             padding: 8px 6px;
@@ -520,6 +546,61 @@
             overflow: hidden;
             text-overflow: ellipsis;
             width: 100%;
+        }
+
+        /* Subject Header Row (sticky, columns match .subject-attendance width so it lines up with every student row) */
+        .subject-header-row {
+            display: flex;
+            align-items: stretch;
+            position: sticky;
+            top: 0;
+            z-index: 4;
+            background: linear-gradient(180deg, #fbfcff, #f5f7ff);
+            border-bottom: 2px solid var(--primary-light);
+            padding: 6px 4px;
+            min-width: max-content;
+        }
+
+        .subject-header-spacer {
+            width: var(--student-column-width);
+            flex: 0 0 var(--student-column-width);
+            position: sticky;
+            left: 0;
+            background: var(--paper);
+            z-index: 5;
+            border-radius: 12px;
+            box-shadow: 4px 0 10px -4px rgba(28,39,76,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: 'Battambang', sans-serif;
+            font-size: 0.84rem;
+            font-weight: 720;
+            color: var(--primary-dark);
+        }
+
+        .subject-header-cells {
+            display: flex;
+            gap: var(--subject-column-gap);
+            padding-left: 10px;
+        }
+
+        .subject-header-cell {
+            width: var(--subject-column-width);
+            min-width: var(--subject-column-width);
+            flex: 0 0 var(--subject-column-width);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 720;
+            color: var(--primary-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            padding: 8px 6px;
         }
 
         .attendance-select, .attendance-input {
@@ -1036,11 +1117,14 @@
         }
 
         @media (max-width: 640px) {
+            :root {
+                --student-column-width: 120px;
+                --subject-column-width: 92px;
+            }
+
             .hero { padding: 1.8rem 0.8rem 2.6rem; border-radius: 0 0 24px 24px; }
             .hero h3 { font-size: 1.35rem; }
             .hero p { font-size: 0.95rem; }
-            .subject-attendance { min-width: 92px; }
-
             /* Keep the action row (Save / View / PDF / Excel) on one line */
             .panel-footer {
                 padding: 10px 8px;
@@ -1059,11 +1143,9 @@
             }
             .btn i, .btn3 i { font-size: 0.9em; }
 
-            /* iOS/Android render selects at native sizes below 16px and
-               zoom the page in on focus — lock to 16px so it stays
-               identical (and doesn't jump) across devices. */
+            /* Keep mobile controls consistent with the subject headers. */
             .attendance-select, .attendance-input {
-                font-size: 16px;
+                font-size: 0.8rem;
                 min-height: 40px;
             }
         }
@@ -1437,11 +1519,39 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
             siteFooter.classList.add('hidden');
         }
 
+        // Builds the sticky subject header row. Each header cell shares the same
+        // width/gap/order as .subject-attendance blocks in every student row, so
+        // the header stays aligned with the matching subject column as you scroll.
+        function renderSubjectHeader() {
+            const headerRow = document.createElement('div');
+            headerRow.className = 'subject-header-row';
+
+            const spacer = document.createElement('div');
+            spacer.className = 'subject-header-spacer';
+            spacer.textContent = 'ឈ្មោះសិស្ស';
+            headerRow.appendChild(spacer);
+
+            const headerCells = document.createElement('div');
+            headerCells.className = 'subject-header-cells';
+
+            subjects.forEach(subject => {
+                const cell = document.createElement('div');
+                cell.className = 'subject-header-cell';
+                cell.textContent = subject;
+                headerCells.appendChild(cell);
+            });
+
+            headerRow.appendChild(headerCells);
+            return headerRow;
+        }
+
         function renderStudentList() {
             studentListContainer.innerHTML = '';
             // Custom dropdown panels live in document.body (so they're never
             // clipped by scrolling rows), so they must be cleared explicitly.
             document.querySelectorAll('.cs-panel').forEach(p => p.remove());
+
+            studentListContainer.appendChild(renderSubjectHeader());
             const students = [...(studentData[currentSelectedClass] || [])].sort((a, b) => {
                 const aIsSummary = a.name === "សរុបចំនួនខូច";
                 const bIsSummary = b.name === "សរុបចំនួនខូច";
@@ -1477,6 +1587,31 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                 const nameSpan = document.createElement('span');
                 nameSpan.className = 'student-name';
                 nameSpan.textContent = studentName;
+                nameSpan.title = studentName;
+                nameSpan.setAttribute('role', 'button');
+                nameSpan.setAttribute('tabindex', '0');
+
+                let fullNameTimer;
+                const toggleFullName = (event) => {
+                    event.stopPropagation();
+                    document.querySelectorAll('.student-name.is-expanded').forEach(name => {
+                        if (name !== nameSpan) name.classList.remove('is-expanded');
+                    });
+                    clearTimeout(fullNameTimer);
+                    const isExpanded = nameSpan.classList.toggle('is-expanded');
+                    if (isExpanded) {
+                        fullNameTimer = setTimeout(() => {
+                            nameSpan.classList.remove('is-expanded');
+                        }, 2000);
+                    }
+                };
+                nameSpan.addEventListener('click', toggleFullName);
+                nameSpan.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        toggleFullName(event);
+                    }
+                });
 
                 if (studentName === "សរុបចំនួនខូច") {
                     studentDiv.classList.add('sticky-bottom');
@@ -1513,11 +1648,6 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                         placeholder.className = 'subject-attendance subject-placeholder';
                         placeholder.style.visibility = 'hidden';
 
-                        const placeholderLabel = document.createElement('span');
-                        placeholderLabel.className = 'subject-label';
-                        placeholderLabel.textContent = subject;
-                        placeholder.appendChild(placeholderLabel);
-
                         const placeholderFiller = document.createElement('select');
                         placeholderFiller.className = 'attendance-select';
                         placeholder.appendChild(placeholderFiller);
@@ -1533,10 +1663,6 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                     const subjectBlock = document.createElement('div');
                     subjectBlock.className = 'subject-attendance';
 
-                    const subjectLabel = document.createElement('span');
-                    subjectLabel.className = 'subject-label';
-                    subjectLabel.textContent = subject;
-
                     // Load saved status from local user changes OR database
                     if (attendanceData[currentSelectedClass][subject][studentId] === undefined) {
                         const rawStatus = savedAttendanceObj[subject];
@@ -1551,7 +1677,7 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                         const input = document.createElement('input');
                         input.type = 'text';
                         input.className = 'attendance-input';
-                        input.placeholder = 'បញ្ចូល...';
+                        input.placeholder = '...';
                         input.value = currentStatus || '';
 
                         input.addEventListener('input', (e) => {
@@ -1559,7 +1685,6 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                             attendanceData[currentSelectedClass][subject][studentId] = (val === '') ? null : val;
                         });
 
-                        subjectBlock.appendChild(subjectLabel);
                         subjectBlock.appendChild(input);
                     } else if (isDamagedSummaryRow && subject.includes('(សង)')) {
                         // Damaged-summary row: (សង) subjects become a number input instead of a select
@@ -1575,7 +1700,6 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                             attendanceData[currentSelectedClass][subject][studentId] = (val === '') ? null : val;
                         });
 
-                        subjectBlock.appendChild(subjectLabel);
                         subjectBlock.appendChild(input);
                     } else {
                         const select = document.createElement('select');
@@ -1657,7 +1781,6 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                             }
                         });
 
-                        subjectBlock.appendChild(subjectLabel);
                         subjectBlock.appendChild(enhanceSelect(select));
                     }
 
