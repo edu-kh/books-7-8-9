@@ -18,7 +18,7 @@
             --bg-3: #ffeef2;
             --paper: #ffffff;
             --ink: #1c274c;
-            --ink-soft: #5a637e;
+            --ink-soft: #343947;
             --ink-faint: #9aa3bf;
 
             --primary: #4361ee;
@@ -510,9 +510,9 @@
         }
 
         .subject-label {
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             color: var(--ink-soft);
-            font-weight: 860;
+            font-weight: 720;
             text-transform: uppercase;
             letter-spacing: 0.3px;
             text-align: center;
@@ -523,20 +523,45 @@
         }
 
         .attendance-select, .attendance-input {
-            padding: 7px 8px;
+            padding: 8px 10px;
             border-radius: var(--radius-pill);
             border: 1.5px solid var(--hl-gray-border);
             outline: none;
-            font-weight: 650;
-            font-size: 0.82rem;
+            font-weight: 700;
+            font-size: 0.88rem;
             width: 100%;
+            min-height: 38px;
+            line-height: 1.3;
             text-align: center;
+            text-align-last: center;
             transition: all 0.2s ease;
             background-color: var(--hl-gray-bg);
             color: var(--hl-gray-text);
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: var(--shadow-sm);
         }
 
-        .attendance-select { cursor: pointer; }
+        /* Reset native OS/browser chrome so the select looks identical
+           across Chrome, Safari, Firefox, and mobile browsers, then draw
+           our own dropdown arrow so it stays consistent everywhere. */
+        .attendance-select {
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding-right: 30px;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7593' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 13px;
+        }
+
+        .attendance-select::-ms-expand { display: none; }
+
+        .attendance-select:hover:not(:disabled) {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
 
         .attendance-select:focus, .attendance-input:focus {
             box-shadow: 0 0 0 4px var(--primary-light);
@@ -556,6 +581,11 @@
             cursor: not-allowed;
             border-color: #eceef6;
             opacity: 0.7;
+            box-shadow: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c3c8db' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 13px;
         }
 
         .attendance-select.no-select {
@@ -615,7 +645,9 @@
             box-shadow: var(--shadow-sm);
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
+            white-space: nowrap;
         }
         .btn3 {
             border: none;
@@ -629,7 +661,9 @@
             box-shadow: var(--shadow-sm);
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
+            white-space: nowrap;
         }
 
         .btn:hover, .btn3:hover {
@@ -693,7 +727,7 @@
 
         .site-footer .heart {
             display: inline-block;
-            color: #da233f;
+            color: #9c2738;
             animation: heartbeat 1.4s ease-in-out infinite;
         }
 
@@ -943,6 +977,43 @@
             .hero h3 { font-size: 1.35rem; }
             .hero p { font-size: 0.95rem; }
             .subject-attendance { min-width: 92px; }
+
+            /* Keep the action row (Save / View / PDF / Excel) on one line */
+            .panel-footer {
+                padding: 10px 8px;
+                gap: 6px;
+                flex-wrap: nowrap;
+            }
+            .panel-footer .save-btn {
+                margin-right: 0;
+            }
+            .btn, .btn3 {
+                flex: 1 1 0;
+                min-width: 0;
+                padding: 8px 4px;
+                font-size: 0.68rem;
+                gap: 3px;
+            }
+            .btn i, .btn3 i { font-size: 0.9em; }
+
+            /* iOS/Android render selects at native sizes below 16px and
+               zoom the page in on focus — lock to 16px so it stays
+               identical (and doesn't jump) across devices. */
+            .attendance-select, .attendance-input {
+                font-size: 16px;
+                min-height: 40px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            /* Very narrow phones: collapse button labels to icons only,
+               keeping all four actions on a single row. */
+            .btn, .btn3 {
+                font-size: 0;
+                padding: 9px 0;
+                gap: 0;
+            }
+            .btn i, .btn3 i { font-size: 0.95rem; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -1066,7 +1137,7 @@
 
         const subjects = [
             "ខ្មែរ(ខ្ចី)","ខ្មែរ(សង)", "គណិត(ខ្ចី)", "គណិត(សង)", "សិក្សាសង្គម(ខ្ចី)", "សិក្សាសង្គម(សង)", "វិទ្យាសាស្ត្រ(ខ្ចី)",
-            "វិទ្យាសាស្ត្រ(សង)",  "ភាសា(ខ្ចី)", "ភាសា(សង)","ផ្សេងៗ"
+            "វិទ្យាសាស្ត្រ(សង)",  "ភាសាបរទេស(ខ្ចី)", "ភាសាបរទេស(សង)","ផ្សេងៗ"
         ];
 
         let classes = [];
