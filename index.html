@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Moul&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -177,7 +177,7 @@
         }
 
         .hero-decor {
-            position: absolute;
+            position: fixed;
             opacity: 0.16;
             font-size: 1.7rem;
             color: white;
@@ -330,7 +330,6 @@
             top: 0; left: 0;
             width: 100%; height: 100%;
             background: rgba(28, 39, 76, 0.55);
-            backdrop-filter: blur(4px);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -894,8 +893,7 @@
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(28, 39, 76, 0.6);
-            backdrop-filter: blur(3px);
+            background: transparent;
             z-index: 10002;
             justify-content: center;
             align-items: center;
@@ -906,12 +904,28 @@
             width: 95%;
             max-width: 900px;
             height: 92vh;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-lg);
             overflow: hidden;
+            resize: both;
+            min-width: 280px;
+            min-height: 220px;
+            cursor: move;
             display: flex;
             flex-direction: column;
-            animation: panelSlideIn 0.3s ease-out both;
+        }
+
+        .pdf-preview-box.is-dragging {
+            touch-action: none;
+        }
+
+        @keyframes pdfPreviewSlideIn {
+            from { transform: translate(-50%, -50%) translateY(28px) scale(0.97); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
 
         .pdf-preview-header {
@@ -922,6 +936,45 @@
             justify-content: space-between;
             align-items: center;
             font-family: 'Battambang', sans-serif;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .pdf-preview-tools {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pdf-preview-header h3 {
+            flex: 1;
+            text-align: center;
+        }
+
+        .pdf-preview-zoom-btn {
+            width: 32px;
+            height: 32px;
+            border: 0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            background: rgba(255,255,255,0.2);
+            font-size: 1rem;
+        }
+
+        .pdf-preview-zoom-btn:hover {
+            background: white;
+            color: var(--accent-purple-dark);
+        }
+
+        .pdf-preview-zoom-level {
+            min-width: 44px;
+            text-align: center;
+            font-size: 0.78rem;
         }
 
         .pdf-preview-header h3 {
@@ -953,7 +1006,7 @@
             flex-grow: 1;
             background: #3d4566;
             position: relative;
-            overflow-y: auto;
+            overflow: auto;
             -webkit-overflow-scrolling: touch;
             padding: 18px 10px;
         }
@@ -964,10 +1017,15 @@
             align-items: center;
             gap: 14px;
             visibility: hidden;
+            min-width: 100%;
+        }
+
+        .pdf-preview-pages.is-zoomed {
+            align-items: flex-start;
         }
 
         .pdf-page-canvas {
-            max-width: 100%;
+            max-width: none;
             height: auto;
             background: white;
             box-shadow: 0 6px 20px rgba(0,0,0,0.35);
@@ -996,7 +1054,6 @@
             top: 0; left: 0;
             width: 100%; height: 100%;
             background: rgba(28, 39, 76, 0.55);
-            backdrop-filter: blur(3px);
             z-index: 10000;
             justify-content: center;
             align-items: center;
@@ -1033,7 +1090,6 @@
             top: 0; left: 0;
             width: 100%; height: 100%;
             background: rgba(28, 39, 76, 0.55);
-            backdrop-filter: blur(3px);
             z-index: 10001;
             justify-content: center;
             align-items: center;
@@ -1206,6 +1262,11 @@
     <div id="pdfPreviewOverlay" class="pdf-preview-overlay">
         <div class="pdf-preview-box">
             <div class="pdf-preview-header">
+                <div class="pdf-preview-tools">
+                    <button class="pdf-preview-zoom-btn" id="pdfZoomOutBtn" type="button" title="Zoom out" aria-label="Zoom out"><i class="fa-solid fa-minus"></i></button>
+                    <span class="pdf-preview-zoom-level" id="pdfZoomLevel">100%</span>
+                    <button class="pdf-preview-zoom-btn" id="pdfZoomInBtn" type="button" title="Zoom in" aria-label="Zoom in"><i class="fa-solid fa-plus"></i></button>
+                </div>
                 <h3 id="pdfPreviewTitle">មើលឯកសារ PDF</h3>
                 <span class="pdf-preview-close" id="pdfPreviewCloseBtn" title="Close"><i class="fa-solid fa-circle-xmark"></i></span>
             </div>
@@ -1335,10 +1396,26 @@
 
         // PDF preview modal elements
         const pdfPreviewOverlay = document.getElementById('pdfPreviewOverlay');
+        const pdfPreviewBox = document.querySelector('.pdf-preview-box');
         const pdfPreviewPages = document.getElementById('pdfPreviewPages');
         const pdfPreviewLoading = document.getElementById('pdfPreviewLoading');
         const pdfPreviewTitle = document.getElementById('pdfPreviewTitle');
         const pdfPreviewCloseBtn = document.getElementById('pdfPreviewCloseBtn');
+        const pdfZoomOutBtn = document.getElementById('pdfZoomOutBtn');
+        const pdfZoomInBtn = document.getElementById('pdfZoomInBtn');
+        const pdfZoomLevel = document.getElementById('pdfZoomLevel');
+        let pdfPreviewZoom = 1;
+
+        function updatePdfPreviewZoom() {
+            pdfZoomLevel.textContent = `${Math.round(pdfPreviewZoom * 100)}%`;
+            pdfZoomOutBtn.disabled = pdfPreviewZoom <= 0.5;
+            pdfZoomInBtn.disabled = pdfPreviewZoom >= 2;
+            pdfPreviewPages.classList.toggle('is-zoomed', pdfPreviewZoom > 1);
+            pdfPreviewPages.querySelectorAll('.pdf-page-canvas').forEach(canvas => {
+                const baseWidth = Number(canvas.dataset.baseWidth);
+                canvas.style.width = `${baseWidth * pdfPreviewZoom}px`;
+            });
+        }
 
         if (window.pdfjsLib) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1351,6 +1428,8 @@
             pdfPreviewTitle.textContent = title || 'មើលឯកសារ PDF';
             pdfPreviewPages.innerHTML = '';
             pdfPreviewPages.style.visibility = 'hidden';
+            pdfPreviewZoom = 1;
+            updatePdfPreviewZoom();
             pdfPreviewLoading.style.display = 'flex';
             pdfPreviewOverlay.style.display = 'flex';
 
@@ -1373,7 +1452,8 @@
                     canvas.className = 'pdf-page-canvas';
                     canvas.width = viewport.width;
                     canvas.height = viewport.height;
-                    canvas.style.width = (viewport.width / (window.devicePixelRatio || 1)) + 'px';
+                    canvas.dataset.baseWidth = viewport.width / (window.devicePixelRatio || 1);
+                    canvas.style.width = canvas.dataset.baseWidth + 'px';
 
                     const context = canvas.getContext('2d');
                     await page.render({ canvasContext: context, viewport: viewport }).promise;
@@ -1399,10 +1479,115 @@
         }
 
         pdfPreviewCloseBtn.addEventListener('click', closePdfPreview);
-        pdfPreviewOverlay.addEventListener('click', (e) => {
-            if (e.target === pdfPreviewOverlay) closePdfPreview();
+        let isDraggingPdfPreview = false;
+        let pdfPreviewDragOffsetX = 0;
+        let pdfPreviewDragOffsetY = 0;
+        let pdfPreviewDragStartX = 0;
+        let pdfPreviewDragStartY = 0;
+        let pdfPreviewDragPositioned = false;
+
+        function startPdfPreviewDrag(clientX, clientY, target) {
+            if (target.closest('button, .pdf-preview-close, .pdf-page-canvas')) return;
+
+            const boxRect = pdfPreviewBox.getBoundingClientRect();
+            const isResizeHandle = clientX >= boxRect.right - 20 && clientY >= boxRect.bottom - 20;
+            if (isResizeHandle) return;
+            isDraggingPdfPreview = true;
+            pdfPreviewDragPositioned = false;
+            pdfPreviewDragStartX = clientX;
+            pdfPreviewDragStartY = clientY;
+            pdfPreviewDragOffsetX = clientX - boxRect.left;
+            pdfPreviewDragOffsetY = clientY - boxRect.top;
+        }
+
+        pdfPreviewBox.addEventListener('mousedown', (event) => {
+            startPdfPreviewDrag(event.clientX, event.clientY, event.target);
         });
 
+        pdfPreviewBox.addEventListener('touchstart', (event) => {
+            if (event.touches.length === 1) {
+                const touch = event.touches[0];
+                startPdfPreviewDrag(touch.clientX, touch.clientY, event.target);
+            }
+        }, { passive: true });
+
+        document.addEventListener('mousemove', (event) => {
+            if (!isDraggingPdfPreview) return;
+            if (!pdfPreviewDragPositioned) {
+                const movedDistance = Math.max(
+                    Math.abs(event.clientX - pdfPreviewDragStartX),
+                    Math.abs(event.clientY - pdfPreviewDragStartY)
+                );
+                if (movedDistance < 3) return;
+                const boxRect = pdfPreviewBox.getBoundingClientRect();
+                pdfPreviewBox.style.left = `${boxRect.left}px`;
+                pdfPreviewBox.style.top = `${boxRect.top}px`;
+                pdfPreviewBox.style.transform = 'none';
+                pdfPreviewBox.classList.add('is-dragging');
+                pdfPreviewDragPositioned = true;
+            }
+            const visibleEdge = 80;
+            const maxLeft = Math.max(0, window.innerWidth - visibleEdge);
+            const maxTop = Math.max(0, window.innerHeight - visibleEdge);
+            const left = Math.min(maxLeft, Math.max(0, event.clientX - pdfPreviewDragOffsetX));
+            const top = Math.min(maxTop, Math.max(0, event.clientY - pdfPreviewDragOffsetY));
+            pdfPreviewBox.style.left = `${left}px`;
+            pdfPreviewBox.style.top = `${top}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDraggingPdfPreview = false;
+            pdfPreviewBox.classList.remove('is-dragging');
+            pdfPreviewDragPositioned = false;
+        });
+
+        document.addEventListener('touchmove', (event) => {
+            if (!isDraggingPdfPreview || event.touches.length !== 1) return;
+            event.preventDefault();
+            if (!pdfPreviewDragPositioned) {
+                const touch = event.touches[0];
+                const movedDistance = Math.max(
+                    Math.abs(touch.clientX - pdfPreviewDragStartX),
+                    Math.abs(touch.clientY - pdfPreviewDragStartY)
+                );
+                if (movedDistance < 3) return;
+                const boxRect = pdfPreviewBox.getBoundingClientRect();
+                pdfPreviewBox.style.left = `${boxRect.left}px`;
+                pdfPreviewBox.style.top = `${boxRect.top}px`;
+                pdfPreviewBox.style.transform = 'none';
+                pdfPreviewBox.classList.add('is-dragging');
+                pdfPreviewDragPositioned = true;
+            }
+            const touch = event.touches[0];
+            const visibleEdge = 80;
+            const maxLeft = Math.max(0, window.innerWidth - visibleEdge);
+            const maxTop = Math.max(0, window.innerHeight - visibleEdge);
+            const left = Math.min(maxLeft, Math.max(0, touch.clientX - pdfPreviewDragOffsetX));
+            const top = Math.min(maxTop, Math.max(0, touch.clientY - pdfPreviewDragOffsetY));
+            pdfPreviewBox.style.left = `${left}px`;
+            pdfPreviewBox.style.top = `${top}px`;
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            isDraggingPdfPreview = false;
+            pdfPreviewBox.classList.remove('is-dragging');
+            pdfPreviewDragPositioned = false;
+        });
+
+        document.addEventListener('touchcancel', () => {
+            isDraggingPdfPreview = false;
+            pdfPreviewBox.classList.remove('is-dragging');
+            pdfPreviewDragPositioned = false;
+        });
+
+        pdfZoomOutBtn.addEventListener('click', () => {
+            pdfPreviewZoom = Math.max(0.5, pdfPreviewZoom - 0.25);
+            updatePdfPreviewZoom();
+        });
+        pdfZoomInBtn.addEventListener('click', () => {
+            pdfPreviewZoom = Math.min(2, pdfPreviewZoom + 0.25);
+            updatePdfPreviewZoom();
+        });
         function showDownloadOverlay(type, mode = 'download') {
             downloadIconWrap.classList.remove('pdf', 'excel');
             downloadProgressBar.classList.remove('pdf-color', 'excel-color');
