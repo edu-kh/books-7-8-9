@@ -1971,11 +1971,14 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
 
         let autoSaveTimer;
         let isAutoSaveRequest = false;
+        let autoSavePending = false;
 
         function scheduleAutoSave() {
+            autoSavePending = true;
             clearTimeout(autoSaveTimer);
             autoSaveTimer = setTimeout(() => {
                 if (!saveBtn.disabled && currentSelectedClass) {
+                    autoSavePending = false;
                     isAutoSaveRequest = true;
                     saveBtn.click();
                 }
@@ -2000,6 +2003,7 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
     saveBtn.addEventListener('click', async () => {
         const autoSaveRequest = isAutoSaveRequest;
         isAutoSaveRequest = false;
+        autoSavePending = false;
         clearTimeout(autoSaveTimer);
             const records = [];
             const classObj = attendanceData[currentSelectedClass] || {};
@@ -2057,6 +2061,9 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
             } finally {
                 saveBtn.disabled = false;
                saveBtn.innerHTML = 'Save <i class="fa-solid fa-book"></i>';
+               if (autoSavePending && currentSelectedClass) {
+                   scheduleAutoSave();
+               }
             }
         });
 
