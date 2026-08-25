@@ -560,6 +560,7 @@
             border-bottom: 2px solid var(--primary-light);
             padding: 6px 4px;
             min-width: max-content;
+           
         }
 
         .subject-header-spacer {
@@ -595,7 +596,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            font-size: 0.8rem;
+            font-size: 0.86rem;
             font-weight: 720;
             color: var(--primary-dark);
             text-transform: uppercase;
@@ -1684,21 +1685,27 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                         input.addEventListener('input', (e) => {
                             const val = e.target.value.trim();
                             attendanceData[currentSelectedClass][subject][studentId] = (val === '') ? null : val;
+                            scheduleAutoSave();
                         });
 
                         subjectBlock.appendChild(input);
                     } else if (isDamagedSummaryRow && subject.includes('(សង)')) {
                         // Damaged-summary row: (សង) subjects become a number input instead of a select
                         const input = document.createElement('input');
-                        input.type = 'number';
+                        input.type = 'text';
+                        input.inputMode = 'numeric';
                         input.className = 'attendance-input';
                         input.placeholder = 'ចំនួនខូច';
-                        input.min = '0';
                         input.value = (currentStatus === null || currentStatus === undefined || currentStatus === '') ? '' : currentStatus;
 
                         input.addEventListener('input', (e) => {
-                            const val = e.target.value.trim();
+                            const khmerDigits = '០១២៣៤៥៦៧៨៩';
+                            const val = e.target.value
+                                .replace(/[០-៩]/g, digit => String(khmerDigits.indexOf(digit)))
+                                .replace(/[^0-9]/g, '');
+                            e.target.value = val;
                             attendanceData[currentSelectedClass][subject][studentId] = (val === '') ? null : val;
+                            scheduleAutoSave();
                         });
 
                         subjectBlock.appendChild(input);
@@ -1761,6 +1768,7 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                             const val = e.target.value;
                             attendanceData[currentSelectedClass][subject][studentId] = (val === 'null') ? null : val;
                             updateSelectColor(select, val);
+                            scheduleAutoSave();
 
                             // When (ខ្ចី) changes, enable/disable its paired (សង) select accordingly
                             if (subject.includes('(ខ្ចី)')) {
@@ -1946,6 +1954,34 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
             }
         }
 
+        function setPanelEditingDisabled(disabled) {
+            document.querySelectorAll('.custom-select-wrap.open').forEach(w => w._csClose());
+
+            const controls = studentListContainer.querySelectorAll('input, select, .custom-select-wrap button');
+            controls.forEach(control => {
+                if (disabled) {
+                    control.dataset.wasDisabled = control.disabled ? 'true' : 'false';
+                    control.disabled = true;
+                } else {
+                    control.disabled = control.dataset.wasDisabled === 'true';
+                    delete control.dataset.wasDisabled;
+                }
+            });
+        }
+
+        let autoSaveTimer;
+        let isAutoSaveRequest = false;
+
+        function scheduleAutoSave() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                if (!saveBtn.disabled && currentSelectedClass) {
+                    isAutoSaveRequest = true;
+                    saveBtn.click();
+                }
+            }, 800);
+        }
+
         previewBtn.addEventListener('click', () => {
             if (!currentSelectedClass) return;
             triggerDownload('exportPdf', 'pdf', currentSelectedClass, 'preview');
@@ -1961,7 +1997,10 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
             triggerDownload('exportExcel', 'excel', currentSelectedClass);
         });
 
-      saveBtn.addEventListener('click', async () => {
+    saveBtn.addEventListener('click', async () => {
+        const autoSaveRequest = isAutoSaveRequest;
+        isAutoSaveRequest = false;
+        clearTimeout(autoSaveTimer);
             const records = [];
             const classObj = attendanceData[currentSelectedClass] || {};
 
@@ -1985,7 +2024,9 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
             }
 
             if (records.length === 0) {
-                showPopup('Please select attendance status for at least one student.');
+                if (!autoSaveRequest) {
+                    showPopup('Please select attendance status for at least one student.');
+                }
                 return;
             }
 
@@ -2002,7 +2043,9 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                 const res = await response.json();
 
                 if (res.success) {
-                    showPopup(`Successfully saved ✔️ Thanks!`);
+                    if (!autoSaveRequest) {
+                        showPopup(`Successfully saved ✔️ Thanks!`);
+                    }
                     await loadDataFromAppsScript();
                    // panelOverlay.style.display = 'none';
                 } else {
