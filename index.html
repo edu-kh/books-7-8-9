@@ -62,6 +62,7 @@
         html { scroll-behavior: smooth; }
 
         body {
+            position: relative;
             background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%);
             background-size: 300% 300%;
             animation: gradientDrift 20s ease infinite;
@@ -74,6 +75,36 @@
             min-height: 100vh;
             color: var(--ink);
             overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            width: 30vw;
+            height: 30vw;
+            max-width: 420px;
+            max-height: 420px;
+            min-width: 220px;
+            min-height: 220px;
+            transform: translate(-50%, -50%);
+            background-image: url("ChatGPT Image Aug 29, 2026, 08_18_17 PM.png");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            border-radius: 24px;
+            border: 4px solid rgba(255,255,255,0.9);
+            box-shadow: 0 16px 36px rgba(28, 39, 76, 0.12);
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+            animation: photoFloat 8s ease-in-out infinite;
+        }
+
+        @keyframes photoFloat {
+            0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
+            50% { transform: translate(-50%, -50%) translateY(-14px); }
         }
 
         @keyframes gradientDrift {
@@ -160,6 +191,7 @@
 
         .hero {
             position: relative;
+            z-index: 1;
             overflow: hidden;
             background: linear-gradient(120deg, #4361ee 0%, #6c5ce7 55%, #8b5cf6 100%);
             color: white;
@@ -192,7 +224,7 @@
 
         .hero h3 {
             margin: 0 0 6px;
-            font-size: 1.65rem;
+            font-size: 1.6rem;
             font-family: "Moul";
             position: relative;
             z-index: 1;
@@ -201,7 +233,7 @@
 
         .hero p {
             font-family: "Battambang";
-            font-size: 1.05rem;
+            font-size: 1.15rem;
             margin: 0;
             position: relative;
             z-index: 1;
@@ -210,6 +242,7 @@
 
         .search-container {
             position: relative;
+            z-index: 1;
             max-width: 600px;
             margin: -28px auto 0 auto;
             width: 90%;
@@ -259,6 +292,8 @@
         }
 
         #resultsContainer {
+            position: relative;
+            z-index: 1;
             width: 90%;
             max-width: 600px;
             margin: 14px auto 0;
@@ -602,6 +637,47 @@
             letter-spacing: 0.3px;
             white-space: nowrap;
             padding: 8px 6px;
+        }
+
+        /* Header cell that also holds the ភាសា (English/French/Chinese) picker,
+           shown as a small round icon button sitting to the right of the
+           subject label, so the column width/alignment with student rows
+           below stays unchanged. */
+        .subject-header-cell-with-select {
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            white-space: normal;
+            padding: 8px 3px;
+        }
+
+        .subject-header-label {
+            width: auto;
+            font-size: 0.74rem;
+            line-height: 1.15;
+        }
+
+        .subject-header-lang-select {
+            flex: 0 0 22px;
+            width: 22px;
+            height: 22px;
+            min-height: 22px;
+            min-width: 22px;
+            padding: 0;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            background-image: none;
+            color: var(--primary-dark);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .subject-header-lang-select:hover:not(:disabled) {
+            background-color: var(--primary);
+            color: #fff;
         }
 
         .attendance-select, .attendance-input {
@@ -1287,12 +1363,12 @@
         <span class="hero-decor" style="top:60%; left:15%; animation-delay:1.2s; font-size:1.1rem;"><i class="fa-solid fa-pen"></i></span>
         <span class="hero-decor" style="top:20%; right:9%; animation-delay:0.6s;"><i class="fa-solid fa-graduation-cap"></i></span>
         <span class="hero-decor" style="top:65%; right:16%; animation-delay:1.8s; font-size:1.1rem;"><i class="fa-solid fa-book-bookmark"></i></span>
-        <h3>វិទ្យាល័យ ហ៊ុនសែន មិត្តភាព</h3>
+        <h3>វិទ្យាល័យ ហ៊ុន សែន មិត្តភាព</h3>
         <p>បញ្ជីខ្ចីសងសៀវភៅ(ថ្នាក់ទី៧ ៨ និង៩) ២០២៦~២០២៧</p>
     </div>
 
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="ស្វែងរកថ្នាក់ទី 7A ដល់ 9H">
+        <input type="text" id="searchInput" placeholder="ស្វែងរកថ្នាក់ (ទី 7A ដល់ 9H)">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
     </div>
 
@@ -1347,6 +1423,26 @@
             "ខ្មែរ(ខ្ចី)","ខ្មែរ(សង)", "គណិត(ខ្ចី)", "គណិត(សង)", "សិក្សាសង្គម(ខ្ចី)", "សិក្សាសង្គម(សង)", "វិទ្យាសាស្ត្រ(ខ្ចី)",
             "វិទ្យាសាស្ត្រ(សង)",  "ភាសា(ខ្ចី)", "ភាសា(សង)","ផ្សេងៗ"
         ];
+
+        // Header-level language picker (English / French / Chinese) shown on the
+        // ភាសា(ខ្ចី) column heading. Its value is saved to the sheet under a
+        // column headed exactly "ភាសា", separate from the per-student
+        // ភាសា(ខ្ចី)/ភាសា(សង) ថ្មី/ចាស់ dropdowns.
+        const LANGUAGE_SHEET_HEADER = "ភាសា";
+        const languageOptions = ["អង់គ្លេស", "បារាំង", "ចិន"];
+
+        // Reads the previously saved ភាសា value for a class from the loaded
+        // sheet data (every student in a class shares the same language, so
+        // the first non-empty value found is used to pre-fill the dropdown).
+        function getSavedLanguageValue(className) {
+            const students = studentData[className] || [];
+            for (const s of students) {
+                if (s.name === "សរុបចំនួនខូច") continue;
+                const val = s.attendance && s.attendance[LANGUAGE_SHEET_HEADER];
+                if (val) return val;
+            }
+            return '';
+        }
 
         let classes = [];
         let studentData = {}; 
@@ -1724,12 +1820,72 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
             subjects.forEach(subject => {
                 const cell = document.createElement('div');
                 cell.className = 'subject-header-cell';
-                cell.textContent = subject;
+
+                const label = document.createElement('span');
+                label.className = 'subject-header-label';
+                label.textContent = subject;
+                cell.appendChild(label);
+
+                if (subject === "ភាសា(ខ្ចី)") {
+                    cell.classList.add('subject-header-cell-with-select');
+                    cell.appendChild(buildLanguageHeaderSelect());
+                }
+
                 headerCells.appendChild(cell);
             });
 
             headerRow.appendChild(headerCells);
             return headerRow;
+        }
+
+        // Builds the ភាសា (English/French/Chinese) picker that lives on the
+        // ភាសា(ខ្ចី) header cell. One selection applies to every student in the
+        // currently open class, saved to the sheet under the "ភាសា" column.
+        function buildLanguageHeaderSelect() {
+            const className = currentSelectedClass;
+            if (!attendanceData[className]) attendanceData[className] = {};
+            if (!attendanceData[className][LANGUAGE_SHEET_HEADER]) {
+                attendanceData[className][LANGUAGE_SHEET_HEADER] = {};
+            }
+
+            const select = document.createElement('select');
+            select.className = 'attendance-select subject-header-lang-select';
+
+            languageOptions.forEach(lang => {
+                const opt = document.createElement('option');
+                opt.value = lang;
+                opt.textContent = lang;
+                select.appendChild(opt);
+            });
+
+            // Prefer an in-memory (unsaved) selection, then whatever was last
+            // saved to the sheet for this class, defaulting to អង់គ្លេស.
+            const localValues = Object.values(attendanceData[className][LANGUAGE_SHEET_HEADER]).filter(v => v);
+            const initVal = localValues.length ? localValues[0] : (getSavedLanguageValue(className) || languageOptions[0]);
+            select.value = initVal;
+            updateSelectColor(select, select.value);
+
+            // Only the first (non-summary) student in the class carries the
+            // ភាសា value — it's a per-class setting, so one row is enough.
+            const students = studentData[className] || [];
+            const firstStudent = students.find(s => s.name !== "សរុបចំនួនខូច");
+
+            // Make sure the default (or restored) value is actually queued for
+            // save, not just displayed.
+            if (firstStudent && attendanceData[className][LANGUAGE_SHEET_HEADER][firstStudent.id] === undefined) {
+                attendanceData[className][LANGUAGE_SHEET_HEADER][firstStudent.id] = initVal;
+            }
+
+            select.addEventListener('change', (e) => {
+                const val = e.target.value;
+                if (firstStudent) {
+                    attendanceData[className][LANGUAGE_SHEET_HEADER][firstStudent.id] = val;
+                }
+                updateSelectColor(select, val);
+                scheduleAutoSave();
+            });
+
+            return enhanceSelect(select, { iconOnly: true, icon: 'fa-language' });
         }
 
         function renderStudentList() {
@@ -2011,8 +2167,10 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
             });
         }
 
-        function enhanceSelect(select) {
+        function enhanceSelect(select, options = {}) {
             ensureCustomSelectGlobalListeners();
+            const iconOnly = !!options.iconOnly;
+            const iconClass = options.icon || 'fa-language';
 
             const wrap = document.createElement('div');
             wrap.className = 'custom-select-wrap';
@@ -2034,7 +2192,12 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
             }
 
             function syncTrigger() {
-                trigger.textContent = labelFor(select.value);
+                if (iconOnly) {
+                    trigger.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+                    trigger.title = labelFor(select.value) || 'ជ្រើសរើស';
+                } else {
+                    trigger.textContent = labelFor(select.value);
+                }
                 trigger.className = select.className; // mirrors status colors (attendant/absent/etc.)
                 trigger.disabled = select.disabled;
                 panel.querySelectorAll('.cs-option').forEach(item => {
@@ -2065,10 +2228,14 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
 
             function positionPanel() {
                 const r = trigger.getBoundingClientRect();
+                const panelWidth = iconOnly ? Math.max(130, r.width) : r.width;
                 const spaceBelow = window.innerHeight - r.bottom;
                 const flipUp = spaceBelow < 220 && r.top > spaceBelow;
-                panel.style.left = Math.round(r.left) + 'px';
-                panel.style.width = Math.round(r.width) + 'px';
+                let left = Math.round(r.left);
+                const maxLeft = window.innerWidth - panelWidth - 8;
+                if (left > maxLeft) left = Math.max(8, maxLeft);
+                panel.style.left = left + 'px';
+                panel.style.width = Math.round(panelWidth) + 'px';
                 panel.classList.toggle('flip-up', flipUp);
                 if (flipUp) {
                     panel.style.top = 'auto';
