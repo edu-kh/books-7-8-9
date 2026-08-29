@@ -630,7 +630,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            font-size: 0.86rem;
+            font-size: 0.88rem;
             font-weight: 720;
             color: var(--primary-dark);
             text-transform: uppercase;
@@ -1764,6 +1764,16 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
         setTimeout(hideDownloadOverlay, 1000);
     }
 }
+        // Convert Khmer numerals to Arabic numerals
+        function khmerToArabic(str) {
+            const khmerDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+            let result = str;
+            for (let i = 0; i < 10; i++) {
+                result = result.replace(new RegExp(khmerDigits[i], 'g'), i);
+            }
+            return result;
+        }
+
         searchInput.addEventListener('input', function(e) {
             const query = e.target.value.toLowerCase().trim();
             if (query === "") {
@@ -1771,7 +1781,14 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                 return;
             }
 
-            const filteredClasses = classes.filter(c => c.toLowerCase().includes(query));
+            // Normalize query: convert Khmer numerals to Arabic for matching
+            const normalizedQuery = khmerToArabic(query);
+
+            const filteredClasses = classes.filter(c => {
+                const normalizedClass = khmerToArabic(c.toLowerCase());
+                return normalizedClass.includes(normalizedQuery);
+            });
+            
             resultsContainer.innerHTML = '';
 
             if (filteredClasses.length > 0) {
