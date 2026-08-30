@@ -94,7 +94,7 @@
             background-position: center;
             background-size: cover;
             border-radius: 24px;
-            border: 4px solid rgba(255,255,255,0.9);
+            border: 2px solid rgba(255,255,255,0.9);
             box-shadow: 0 16px 36px rgba(28, 39, 76, 0.12);
             opacity: 0.3;
             pointer-events: none;
@@ -1364,11 +1364,11 @@
         <span class="hero-decor" style="top:20%; right:9%; animation-delay:0.6s;"><i class="fa-solid fa-graduation-cap"></i></span>
         <span class="hero-decor" style="top:65%; right:16%; animation-delay:1.8s; font-size:1.1rem;"><i class="fa-solid fa-book-bookmark"></i></span>
         <h3>វិទ្យាល័យ ហ៊ុន សែន មិត្តភាព</h3>
-        <p>បញ្ជីខ្ចីសងសៀវភៅ(ថ្នាក់ទី៧ ៨ និង៩) ២០២៦~២០២៧</p>
+        <p>បញ្ជីខ្ចីសងសៀវភៅ(ថ្នាក់ទី 7-12) ២០២៦~២០២៧</p>
     </div>
 
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="ស្វែងរកថ្នាក់ (ទី 7A ដល់ 9H)">
+        <input type="text" id="searchInput" placeholder="ស្វែងរកថ្នាក់ ឧ. 7A">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
     </div>
 
@@ -1417,12 +1417,46 @@
         }
 
         // 📍 REPLACE WITH YOUR GOOGLE APPS SCRIPT WEB APP URL
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7GXyyS5oMYEeZ39Z-etK0NdRJJXCEwW8IYbmInL5p5USBNrWuLLtabmu8WHfydor8fQ/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxF-W9lhc76o5H6JYDSHj1kL6EaEdo4Qz0N35MnIxXHPIaQjO-u5lI-jT4o4pS53RebjQ/exec";
 
-        const subjects = [
-            "ខ្មែរ(ខ្ចី)","ខ្មែរ(សង)", "គណិត(ខ្ចី)", "គណិត(សង)", "សិក្សាសង្គម(ខ្ចី)", "សិក្សាសង្គម(សង)", "វិទ្យាសាស្ត្រ(ខ្ចី)",
-            "វិទ្យាសាស្ត្រ(សង)",  "ភាសា(ខ្ចី)", "ភាសា(សង)","ផ្សេងៗ"
-        ];
+        const SUBJECTS_BY_GROUP = {
+            '7-9': [
+                "ខ្មែរ(ខ្ចី)", "ខ្មែរ(សង)", "គណិត(ខ្ចី)", "គណិត(សង)", "សិក្សាសង្គម(ខ្ចី)", "សិក្សាសង្គម(សង)", "វិទ្យាសាស្ត្រ(ខ្ចី)",
+                "វិទ្យាសាស្ត្រ(សង)", "ភាសា(ខ្ចី)", "ភាសា(សង)", "ផ្សេងៗ"
+            ],
+            '10-12': [
+                "ខ្មែរ(ខ្ចី)", "ខ្មែរ(សង)", "គណិត១(ខ្ចី)", "គណិត១(សង)", "គណិត២(ខ្ចី)", "គណិត២(សង)", "រូបវិទ្យា(ខ្ចី)", "រូបវិទ្យា(សង)", "គីមី(ខ្ចី)",
+                "គីមី(សង)", "ជីវវិទ្យា(ខ្ចី)", "ជីវវិទ្យា(សង)", "ផែនដី(ខ្ចី)","ផែនដី(សង)", "សីលធម៌(ខ្ចី)", "សីលធម៌(សង)", "ភូមិវិទ្យា(ខ្ចី)", "ភូមិវិទ្យា(សង)","ប្រវត្តិវិទ្យា(ខ្ចី)", "ប្រវត្តិវិទ្យា(សង)", "ភាសា(ខ្ចី)", "ភាសា(សង)", "ផ្សេងៗ"
+            ]
+        };
+
+        const CLASS_GROUP_LABELS = {
+            '7-9': 'ថ្នាក់ទី ',
+            '10-12': 'ថ្នាក់ទី '
+        };
+
+        const SECONDARY_CLASS_SHEET = 'List-Book';
+
+        function getClassGroup(className) {
+            const match = String(className).match(/(\d+)/);
+            if (!match) return '7-9';
+            const grade = Number(match[1]);
+            return (grade >= 10 && grade <= 12) ? '10-12' : '7-9';
+        }
+
+        function getSubjectsForClass(className) {
+            return SUBJECTS_BY_GROUP[getClassGroup(className)] || SUBJECTS_BY_GROUP['7-9'];
+        }
+
+        function getTargetSheetName(className) {
+            return SECONDARY_CLASS_SHEET;
+        }
+
+        function getPdfOrientation(className) {
+            const match = String(className || '').match(/(\d+)/);
+            const grade = match ? Number(match[1]) : 0;
+            return (grade >= 10 && grade <= 12) ? 'landscape' : 'portrait';
+        }
 
         // Header-level language picker (English / French / Chinese) shown on the
         // ភាសា(ខ្ចី) column heading. Its value is saved to the sheet under a
@@ -1714,11 +1748,12 @@ function isInAppBrowser() {
             ua.includes("Instagram"));
 }
 
-async function triggerDownload(action, type, sheetName, mode = 'download') {
+async function triggerDownload(action, type, sheetName, mode = 'download', className = sheetName) {
     showDownloadOverlay(type, mode);
 
     try {
-        const scriptUrl = `${WEB_APP_URL}?action=${action}&sheetName=${encodeURIComponent(sheetName)}`;
+        const orientation = getPdfOrientation(className);
+        const scriptUrl = `${WEB_APP_URL}?action=${action}&sheetName=${encodeURIComponent(sheetName)}&className=${encodeURIComponent(className)}&orientation=${encodeURIComponent(orientation)}`;
         const response = await fetch(scriptUrl);
         const data = await response.json();
 
@@ -1743,13 +1778,17 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
             const blob = new Blob([byteArray], { type: data.mimeType });
             const blobUrl = URL.createObjectURL(blob);
 
-            // Create local memory URL and trigger direct download
+            const extension = type === 'pdf' ? 'pdf' : 'xlsx';
+            const classLabel = String(className || sheetName || 'Class').trim();
+            const fileNameBase = `បញ្ជីសៀវភៅ ${classLabel || 'Class'}`
+                .replace(/[\\/:*?"<>|]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            const downloadName = `${fileNameBase}.${extension}`;
+
             const downloadAnchor = document.createElement('a');
             downloadAnchor.href = blobUrl;
-            // Build file name as "Sheet Title - Sheet Tab.ext"
-            const extension = type === 'pdf' ? 'pdf' : 'xlsx';
-            const sheetTitle = document.title || 'Sheet';
-            downloadAnchor.download = `${sheetTitle} - ${sheetName}.${extension}`;
+            downloadAnchor.download = downloadName;
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             document.body.removeChild(downloadAnchor);
@@ -1813,7 +1852,8 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
 
         function openStudentPanel(className) {
             currentSelectedClass = className;
-            panelClassTitle.textContent = `បញ្ជីសៀវភៅថ្នាក់ទី ${className} ឆ្នាំ 2026~27`;
+            const groupLabel = CLASS_GROUP_LABELS[getClassGroup(className)] || 'ថ្នាក់';
+            panelClassTitle.textContent = `បញ្ជីសៀវភៅ ${groupLabel} ${className} ឆ្នាំ 2026~27`;
             renderStudentList();
             panelOverlay.style.display = 'flex';
             siteFooter.classList.add('hidden');
@@ -1833,8 +1873,9 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
 
             const headerCells = document.createElement('div');
             headerCells.className = 'subject-header-cells';
+            const activeSubjects = getSubjectsForClass(currentSelectedClass);
 
-            subjects.forEach(subject => {
+            activeSubjects.forEach(subject => {
                 const cell = document.createElement('div');
                 cell.className = 'subject-header-cell';
 
@@ -1911,8 +1952,16 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
             // clipped by scrolling rows), so they must be cleared explicitly.
             document.querySelectorAll('.cs-panel').forEach(p => p.remove());
 
-            studentListContainer.appendChild(renderSubjectHeader());
-            const students = [...(studentData[currentSelectedClass] || [])].sort((a, b) => {
+            const rawStudents = [...(studentData[currentSelectedClass] || [])];
+            const hasSummaryRow = rawStudents.some(student => student.name === "សរុបចំនួនខូច");
+            const students = hasSummaryRow ? rawStudents : [
+                ...rawStudents,
+                {
+                    id: 'summary-damaged-total',
+                    name: 'សរុបចំនួនខូច',
+                    attendance: {}
+                }
+            ].sort((a, b) => {
                 const aIsSummary = a.name === "សរុបចំនួនខូច";
                 const bIsSummary = b.name === "សរុបចំនួនខូច";
                 if (aIsSummary && !bIsSummary) return 1;
@@ -1920,11 +1969,15 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                 return 0;
             });
 
+            studentListContainer.appendChild(renderSubjectHeader());
+
             if (!attendanceData[currentSelectedClass]) {
                 attendanceData[currentSelectedClass] = {};
             }
 
         
+
+            const activeSubjects = getSubjectsForClass(currentSelectedClass);
 
             students.forEach(student => {
                 const studentId = student.id;
@@ -2001,8 +2054,9 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
                 // Tracks (ខ្ចី)/(សង) select pairs for this student row, keyed by base subject name
                 const pairSelects = {};
 
-                subjects.forEach(subject => {
-                    // Hide (ខ្ចី) and ផ្សេងៗ subjects entirely for the damaged-summary row
+                activeSubjects.forEach(subject => {
+                    // Hide (ខ្ចី) and ផ្សេងៗ subjects entirely for the damaged-summary row,
+                    // matching the same behavior in the 7–9 panel.
                     if (isDamagedSummaryRow && (subject.includes('(ខ្ចី)') || subject === "ផ្សេងៗ")) {
                         const placeholder = document.createElement('div');
                         placeholder.className = 'subject-attendance subject-placeholder';
@@ -2356,17 +2410,20 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
 
         previewBtn.addEventListener('click', () => {
             if (!currentSelectedClass) return;
-            triggerDownload('exportPdf', 'pdf', currentSelectedClass, 'preview');
+            const targetSheetName = getTargetSheetName(currentSelectedClass);
+            triggerDownload('exportPdf', 'pdf', targetSheetName, 'preview', currentSelectedClass);
         });
 
         pdfBtn.addEventListener('click', () => {
             if (!currentSelectedClass) return;
-            triggerDownload('exportPdf', 'pdf', currentSelectedClass);
+            const targetSheetName = getTargetSheetName(currentSelectedClass);
+            triggerDownload('exportPdf', 'pdf', targetSheetName, 'download', currentSelectedClass);
         });
 
         excelBtn.addEventListener('click', () => {
             if (!currentSelectedClass) return;
-            triggerDownload('exportExcel', 'excel', currentSelectedClass);
+            const targetSheetName = getTargetSheetName(currentSelectedClass);
+            triggerDownload('exportExcel', 'excel', targetSheetName, 'download', currentSelectedClass);
         });
 
     saveBtn.addEventListener('click', async () => {
@@ -2376,6 +2433,7 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
         clearTimeout(autoSaveTimer);
             const records = [];
             const classObj = attendanceData[currentSelectedClass] || {};
+            const targetSheetName = getTargetSheetName(currentSelectedClass);
 
             for (const subject in classObj) {
                 for (const studentId in classObj[subject]) {
@@ -2409,7 +2467,12 @@ async function triggerDownload(action, type, sheetName, mode = 'download') {
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ className: currentSelectedClass, records: records }),
+                    body: JSON.stringify({
+                        className: currentSelectedClass,
+                        sheetName: targetSheetName,
+                        targetSheet: targetSheetName,
+                        records: records
+                    }),
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                 });
 
